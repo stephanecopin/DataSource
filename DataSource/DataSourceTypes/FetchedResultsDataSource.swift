@@ -108,15 +108,23 @@ public final class FetchedResultsDataSource: DataSource {
 			forChangeType type: NSFetchedResultsChangeType,
 			newIndexPath: NSIndexPath?)
 		{
+			if type.rawValue == 0 {
+				// This happens sometimes and corrupts the DataChangeTarget.
+				// This is definitely not a valid NSFetchedResultsChangeType, so not sure why this is happening.
+				return
+			}
+			
 			switch type {
-			case .Insert:
-				self.currentBatch.append(DataChangeInsertItems(newIndexPath!))
-			case .Delete:
-				self.currentBatch.append(DataChangeDeleteItems(indexPath!))
-			case .Move:
-				self.currentBatch.append(DataChangeMoveItem(from: indexPath!, to: newIndexPath!))
 			case .Update:
 				self.currentBatch.append(DataChangeReloadItems(indexPath!))
+			case .Insert:
+				self.currentBatch.append(DataChangeInsertItems(newIndexPath!))
+			case .Move:
+				if indexPath != newIndexPath {
+					self.currentBatch.append(DataChangeMoveItem(from: indexPath!, to: newIndexPath!))
+				}
+			case .Delete:
+				self.currentBatch.append(DataChangeDeleteItems(indexPath!))
 			}
 		}
 
