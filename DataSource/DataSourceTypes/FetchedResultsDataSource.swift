@@ -22,29 +22,29 @@ public final class FetchedResultsDataSource: DataSource {
 	public let changes: Signal<DataChange, NoError>
 	private let observer: Observer<DataChange, NoError>
 
-	private let frc: NSFetchedResultsController
-	private let frcDelegate: Delegate
+	private let fetchedResultsControllerDelegate: Delegate
+	public let fetchedResultsController: NSFetchedResultsController
 
 	public init(fetchRequest: NSFetchRequest, managedObjectContext: NSManagedObjectContext, sectionNameKeyPath: String? = nil, cacheName: String? = nil) throws {
 		(self.changes, self.observer) = Signal<DataChange, NoError>.pipe()
-		self.frc = NSFetchedResultsController(fetchRequest: fetchRequest, managedObjectContext: managedObjectContext, sectionNameKeyPath: sectionNameKeyPath, cacheName: cacheName)
-		self.frcDelegate = Delegate(observer: self.observer)
-		self.frc.delegate = self.frcDelegate
+		self.fetchedResultsController = NSFetchedResultsController(fetchRequest: fetchRequest, managedObjectContext: managedObjectContext, sectionNameKeyPath: sectionNameKeyPath, cacheName: cacheName)
+		self.fetchedResultsControllerDelegate = Delegate(observer: self.observer)
+		self.fetchedResultsController.delegate = self.fetchedResultsControllerDelegate
 
-		try self.frc.performFetch()
+		try self.fetchedResultsController.performFetch()
 	}
 
 	deinit {
-		self.frc.delegate = nil
+		self.fetchedResultsController.delegate = nil
 		self.observer.sendCompleted()
 	}
 
 	private func infoForSection(section: Int) -> NSFetchedResultsSectionInfo {
-		return self.frc.sections![section]
+		return self.fetchedResultsController.sections![section]
 	}
 
 	public var numberOfSections: Int {
-		return self.frc.sections?.count ?? 0
+		return self.fetchedResultsController.sections?.count ?? 0
 	}
 
 	public func numberOfItemsInSection(section: Int) -> Int {
